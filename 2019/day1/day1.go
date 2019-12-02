@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"log"
-	"math"
 	"os"
 	"strconv"
 )
@@ -27,7 +26,7 @@ func part1() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		total += int(math.Round(float64(val/3)) - 2)
+		total += val / 3 - 2
 	}
 	log.Println("Part 1 - Module Fuel:", total)
 
@@ -48,10 +47,10 @@ func part2() {
 			log.Fatal(err)
 		}
 
-		fuel := int(math.Round(float64(val/3)) - 2)
+		fuel := val / 3 - 2
 		for fuel > 0 {
 			total += fuel
-			fuel = int(math.Round(float64(fuel/3)) - 2)
+			fuel = fuel / 3 - 2
 		}
 	}
 	log.Println("Part 2 - Fuel's fuel:", total)

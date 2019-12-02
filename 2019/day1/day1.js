@@ -16,7 +16,7 @@ rd.on('line', (line) => {
     let total = 0;
     modules.forEach((val) => {
         total += fuelCalc(val);
-    })
+    });
 
     // Part 2
     console.log("Total Modules Fuel: ", total);
