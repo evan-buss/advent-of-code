@@ -6,6 +6,5 @@ def calcFuel(next):
 with open("input.txt") as fs:
     content = fs.readlines()
 
-content = [int(x.strip()) for x in content]
-fuels = [calcFuel(x) for x in content]
-print("Total Fuel: " + str(sum(fuels)))
+fuel = [calcFuel(int(x.strip())) for x in content]
+print("Total Fuel: " + str(sum(fuel)))
