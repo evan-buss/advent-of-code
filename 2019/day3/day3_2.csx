@@ -30,7 +30,9 @@ void Mapper(string path, char id)
             (char, int) cross;
             record.TryGetValue((x, y), out cross);
             // Add the current position to the dict and increment total distance to get there
-            record[(x, y)] = cross.Item1 != '\0' && cross.Item1 != id ? ('c', wireDistance + cross.Item2) : (id, wireDistance + cross.Item2);
+            record[(x, y)] = cross.Item1 != '\0' && cross.Item1 != id
+                ? ('c', wireDistance + cross.Item2)
+                : (id, wireDistance + cross.Item2);
         }
     }
 }
