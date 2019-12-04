@@ -35,7 +35,6 @@ void Mapper(string path, char id)
 var minCross = record
     .Where(kvp => kvp.Value == 'c') // Get crossed intersections
     .Select(kvp => Math.Abs(kvp.Key.Item1) + Math.Abs(kvp.Key.Item2)) // Add the x and y distances
-    .ToArray()
     .Min();
 
 Console.WriteLine(minCross);
