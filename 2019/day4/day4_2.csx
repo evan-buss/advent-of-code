@@ -11,7 +11,7 @@ var totalCombinations =
         foreach (char c in pwd.ToString().Skip(1))
         {
             // Ensure least to greatest ordering
-            if (Char.GetNumericValue(prev) > Char.GetNumericValue(c))
+            if (prev > c)
             {
                 return false;
             }
