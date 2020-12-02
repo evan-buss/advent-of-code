@@ -11,8 +11,6 @@ def part1():
             else:
                 pairs.add(num)
 
-
-
 def part2():
     with open("input.txt") as f:
         content = [int(x.strip()) for x in f.readlines()]
