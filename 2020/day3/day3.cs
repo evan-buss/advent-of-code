@@ -22,7 +22,7 @@ void Part2()
         (1, 2),
     };
 
-    Console.WriteLine("Part 2: {0} Trees", slopes.Select(tup => Traverse(tup.x, tup.y)).Aggregate(1L, (x, y) => x * y));
+    Console.WriteLine("Part 2: {0} Trees", slopes.Select(tup => Traverse(tup.x, tup.y)).Aggregate(1U, (x, y) => x * y));
 }
 
 // Traverse a slope by the given steps. Wraps on the horizontal.
