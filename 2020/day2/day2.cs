@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
+
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 var lines = (from line in File.ReadAllLines("input.txt")
              select line.Trim()).ToList();
@@ -42,8 +40,7 @@ void Part2()
         var character = parts[1][0];
         var password = parts[2];
 
-        var count = password.Where((c, i) => (i + 1 == pos1 || i + 1 == pos2) && password[i] == character).Count();
-        return count == 1;
+        return password.Where((c, i) => (i + 1 == pos1 || i + 1 == pos2) && password[i] == character).Count() == 1;
     }
 }
 
