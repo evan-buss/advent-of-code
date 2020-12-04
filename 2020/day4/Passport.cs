@@ -18,11 +18,11 @@ namespace Day4
 
         public Passport(string passport)
         {
-            var tokens = passport.Replace("\n", " ").Split(" ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var tokens = passport.Replace(Environment.NewLine, " ").Split(" ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             foreach (var token in tokens)
             {
-                var key = token.Split(":")[0].Trim();
-                var val = token.Split(":")[1].Trim();
+                var key = token.Split(":")[0];
+                var val = token.Split(":")[1];
                 switch (key)
                 {
                     case "byr": Byr = int.Parse(val); break;

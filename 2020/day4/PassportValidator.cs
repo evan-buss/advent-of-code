@@ -12,7 +12,7 @@ namespace Day4
             RuleFor(x => x.Byr).NotEmpty().InclusiveBetween(1920, 2002);
             RuleFor(x => x.Iyr).NotEmpty().InclusiveBetween(2010, 2020);
             RuleFor(x => x.Eyr).NotEmpty().InclusiveBetween(2020, 2030);
-            RuleFor(x => x.Hgt).NotEmpty().NotNull().Must((hgt) => hgt.EndsWith("cm") || hgt.EndsWith("in"));
+            RuleFor(x => x.Hgt).NotEmpty().Must((hgt) => hgt.EndsWith("cm") || hgt.EndsWith("in"));
             RuleFor(x => x.Hgt).NotEmpty().Must((hgt) =>
             {
                 if (hgt == null) return false;
@@ -21,12 +21,12 @@ namespace Day4
                 if (hgt.EndsWith("in") && (height < 59 || height > 76)) return false;
                 return true;
             });
+            RuleFor(x => x.Hcl).NotEmpty().Matches("^#[a-f0-9]{6}$");
 
-            var validEcl = new HashSet<string>(new string[] { "amb", "blu", "brn", "gry", "grn", "hzl", "oth" });
+            var validEcls = new HashSet<string>(new string[] { "amb", "blu", "brn", "gry", "grn", "hzl", "oth" });
+            RuleFor(x => x.Ecl).NotEmpty().Must(x => validEcls.Contains(x));
 
-            RuleFor(x => x.Hcl).Matches("^#[a-f0-9]{6}$");
-            RuleFor(x => x.Ecl).Must(x => validEcl.Contains(x));
-            RuleFor(x => x.Pid).Matches("^[0-9]{9}$");
+            RuleFor(x => x.Pid).NotEmpty().Matches("^[0-9]{9}$");
         }
     }
 }
