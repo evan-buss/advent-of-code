@@ -1,41 +1,25 @@
 from typing import Any, Union
-
-from dataclasses import dataclass
 from math import floor
 
 
-@dataclass
 class Seat:
     seat_id: int
-    col: int
-    row: int
 
     def __init__(self, bpass: str):
-        self._parse_rows(bpass)
-        self._parse_cols(bpass)
-        self.seat_id = self.row * 8 + self.col
+        row = self._binary_search(
+            bpass[:7].replace("F", "L").replace("B", "R"),
+            0, 127)
+        col = self._binary_search(bpass[7:], 0, 7)
+        self.seat_id = row * 8 + col
 
-    def _parse_rows(self, bpass: str):
-        row_parts = bpass[:7]
-        left, right = 0, 127
-        for char in row_parts:
-            m = floor((left + right) / 2)
-            if char == "F":
-                right = m
-            elif char == "B":
-                left = m + 1
-        self.row = left
-
-    def _parse_cols(self, bpass: str):
-        col_parts = bpass[7:]
-        left, right = 0, 7
-        for char in col_parts:
+    def _binary_search(self, bpass: str, left: int, right: int) -> int:
+        for char in bpass:
             m = floor((left + right) / 2)
             if char == "L":
                 right = m
             elif char == "R":
                 left = m + 1
-        self.col = left
+        return left
 
 
 with open("input.txt") as file:
