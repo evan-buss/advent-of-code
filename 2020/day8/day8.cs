@@ -4,11 +4,12 @@ using System.IO;
 using System.Linq;
 
 var code = File.ReadAllLines("input.txt")
-    .Select(x => new Instruction
-    {
-        Operation = x.Split(' ')[0],
-        Argument = int.Parse(x.Split(' ')[1])
-    }).ToList();
+               .Select(x => new Instruction
+               {
+                   Operation = x.Split(' ')[0],
+                   Argument = int.Parse(x.Split(' ')[1])
+               })
+               .ToList();
 
 Part1();
 Part2();
@@ -20,10 +21,8 @@ void Part1()
     for (int i = 0; i < code.Count; i++)
     {
         var op = code[i];
-        if (seen.Contains(op))
-        {
-            break;
-        }
+        if (seen.Contains(op)) break;
+        seen.Add(op);
 
         switch (op)
         {
@@ -38,7 +37,6 @@ void Part1()
                 i += op.Argument - 1;
                 break;
         }
-        seen.Add(op);
     }
 
     Console.WriteLine("Part 1: {0}", accum);
@@ -46,60 +44,52 @@ void Part1()
 
 void Part2()
 {
-    var accum = 0;
-    var done = false;
-    var prev_flip = -1;
-    while (!done)
-    {
-        var seen = new HashSet<Instruction>();
-        var has_flipped = false;
+    // Find all instructions that can be swapped and store their indices.
+    var swappable = code.Select((x, i) => new { Index = i, Op = x.Operation })
+                        .Where(x => x.Op is "nop" or "jmp")
+                        .Select(x => x.Index)
+                        .ToList();
 
-        Console.WriteLine("================== {0} {1}", prev_flip, accum);
-        accum = 0;
-        for (int i = 0; i < code.Count;)
+    foreach (var swap_index in swappable)
+    {
+        // Swap the reference and store it so we can put it back
+        var original = code[swap_index];
+        code[swap_index] = new Instruction
+        {
+            Operation = code[swap_index].Operation == "nop" ? "jmp" : "nop",
+            Argument = code[swap_index].Argument
+        };
+
+        var seen = new HashSet<Instruction>();
+        int accum = 0;
+        for (int i = 0; i < code.Count; i++)
         {
             var op = code[i];
-            //Console.WriteLine($"[{i}] {op}");
-            if (seen.Contains(op))
-            {
-                break;
-            }
-
-            if (op.Operation is "nop" or "jmp" && !has_flipped && prev_flip < i)
-            {
-                has_flipped = true;
-                prev_flip++;
-
-                Console.Write("[{0}] Swapping: {1}", i, op);
-                op = new Instruction
-                {
-                    Argument = op.Argument,
-                    Operation = op.Operation == "nop" ? "jmp" : "nop"
-                };
-                Console.WriteLine(" with {0}", op);
-            }
-
+            if (seen.Contains(op)) break;
             seen.Add(op);
-            i = op switch
-            {
-                { Operation: "nop" } or { Operation: "acc" } => i + 1,
-                { Operation: "jmp" } => i + op.Argument,
-                _ => throw new Exception("WTF")
-            };
 
-            if (op.Operation == "acc")
+            switch (op)
             {
-                accum += op.Argument;
+                case { Operation: "nop" }:
+                    break;
+
+                case { Operation: "acc" }:
+                    accum += op.Argument;
+                    break;
+
+                case { Operation: "jmp" }:
+                    i += op.Argument - 1;
+                    break;
             }
 
-            if (i == code.Count || i == code.Count - 1) done = true;
+            if (i == code.Count - 1) Console.WriteLine("Part 2: {0}", accum);
         }
-    }
 
-    Console.WriteLine("Part 2: {0}", accum);
+        code[swap_index] = original;
+    }
 }
 
-internal class Instruction
+public class Instruction
 {
     public string Operation { get; set; }
     public int Argument { get; set; }
