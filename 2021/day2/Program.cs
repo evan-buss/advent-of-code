@@ -49,7 +49,6 @@ static int Part2(List<Command> commands)
         break;
     }
   }
-
   return x * y;
 }
 
