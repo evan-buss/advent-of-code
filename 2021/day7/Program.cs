@@ -33,20 +33,11 @@ void Part2()
     var total = 0;
     foreach (var crab in input)
     {
-      total += FuelCalc(Math.Abs(crab - i));
+      var distance = Math.Abs(crab - i);
+      total += ((distance * distance) + distance) / 2;
     }
     minDistance = Math.Min(minDistance, total);
   }
 
   Console.WriteLine($"Part 2: {minDistance}");
-}
-
-static int FuelCalc(int distance)
-{
-  var sum = 0;
-  for (int i = 1; i <= distance; i++)
-  {
-    sum += i;
-  }
-  return sum;
 }
