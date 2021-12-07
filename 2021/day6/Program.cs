@@ -2,10 +2,11 @@
 
 Console.WriteLine($"Part 1: {Simulate(80)}");
 Console.WriteLine($"Part 2: {Simulate(256)}");
+Console.WriteLine($"Flex: {Simulate(10_000)}");
 
-long Simulate(int days)
+ulong Simulate(int days)
 {
-  var population = new long[9];
+  var population = new ulong[9];
   foreach (var fishy in seed) population[fishy]++;
   for (var day = 0; day < days; day++)
   {
@@ -13,10 +14,10 @@ long Simulate(int days)
     population = ShiftLeft(population);
     population[6] += babies;
   }
-  return population.Sum();
+  return population.Aggregate((a, c) => a + c);
 }
 
-static long[] ShiftLeft(long[] arr)
+static T[] ShiftLeft<T>(T[] arr)
 {
   var temp = arr[0];
   Array.Copy(arr, 1, arr, 0, arr.Length - 1);
