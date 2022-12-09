@@ -13,5 +13,5 @@ for (var y = 0; y < input.Length; y++)
     }
 }
 
-new Part1().Do(forest);
-new Part2(forest);
+Part1.Run(forest);
+Part2.Run(forest);
