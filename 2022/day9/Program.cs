@@ -1,56 +1,48 @@
 ﻿using System.Drawing;
 
-var lines = File.ReadLines("input.txt");
+Console.WriteLine($"Part 1: {ComputeGrid(File.ReadLines("input.txt"), 2)}");
+Console.WriteLine($"Part 2: {ComputeGrid(File.ReadLines("input.txt"), 10)}");
 
-var seen = new HashSet<Point>();
-var head = new Point(0, 0);
-var tail = new Point(0, 0);
-
-foreach (var command in lines)
+int ComputeGrid(IEnumerable<string> lines, int ropeLength)
 {
-    var times = int.Parse(command[2..]);
-    for (var i = 0; i < times; i++)
+    var seen = new HashSet<Point>();
+    var rope = new Point[ropeLength];
+    Array.Fill(rope, new Point(0, 0));
+
+    foreach (var command in lines)
     {
-        var lastPosition = head;
-        head = command[0] switch
+        var times = int.Parse(command[2..]);
+        for (var i = 0; i < times; i++)
         {
-            'U' => head with { Y = head.Y + 1 },
-            'D' => head with { Y = head.Y - 1 },
-            'L' => head with { X = head.X - 1 },
-            'R' => head with { X = head.X + 1 },
-            _ => throw new Exception("Invalid Direction")
-        };
-        var diff = Point.Subtract(head, new Size(tail));
+            // Compute new head position.
+            rope[0] = command[0] switch
+            {
+                'U' => rope[0] with { Y = rope[0].Y + 1 },
+                'D' => rope[0] with { Y = rope[0].Y - 1 },
+                'L' => rope[0] with { X = rope[0].X - 1 },
+                'R' => rope[0] with { X = rope[0].X + 1 },
+                _ => throw new Exception("Invalid Direction")
+            };
 
-        if (Math.Abs(diff.X) > 1 || Math.Abs(diff.Y) > 1)
-        {
-            tail = lastPosition;
+            // Update all tail segments
+            for (var j = 1; j < rope.Length; j++)
+            {
+                var rowDiff = rope[j - 1].X - rope[j].X;
+                var colDiff = rope[j - 1].Y - rope[j].Y;
+
+                if (Math.Abs(rowDiff) > 1 || Math.Abs(colDiff) > 1)
+                {
+                    rope[j] = rope[j] with
+                    {
+                        X = rope[j].X + Math.Sign(rowDiff),
+                        Y = rope[j].Y + Math.Sign(colDiff)
+                    };
+                }
+            }
+
+            seen.Add(rope[^1]);
         }
-
-        seen.Add(tail);
-
-        // Console.WriteLine($"Command: {command} Tail{tail} -- Head: {head} -- Diff {diff}");
-        // PrintGrid(head, tail);
     }
-}
 
-Console.WriteLine($"Part 1: {seen.Count}");
-
-void PrintGrid(Point h, Point t, int size = 10)
-{
-    for (var y = 0; y < size; y++)
-    {
-        for (var x = 0; x < size; x++)
-        {
-            var curr = new Point(x, y);
-            if (curr == h)
-                Console.Write(" H ");
-            else if (curr == t)
-                Console.Write(" T ");
-            else
-                Console.Write(" . ");
-        }
-
-        Console.WriteLine();
-    }
+    return seen.Count;
 }
