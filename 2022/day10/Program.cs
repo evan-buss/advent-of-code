@@ -14,7 +14,7 @@ void Part2(IReadOnlyList<string> instructions)
     while (currentInstruction < instructions.Count)
     {
         var beam = cycle % 40 - 1;
-        Console.Write(beam >= register - 1 && beam <= register + 1 ? "#" : ".");
+        Console.Write(beam >= register - 1 && beam <= register + 1 ? "█" : ".");
 
         if (cycle % 40 == 0)
         {
