@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Security.Principal;
 using Problems.Attributes;
 
 namespace Problems;
@@ -7,8 +6,12 @@ namespace Problems;
 [Day(3)]
 public class Day3 : IProblem
 {
-    private record Coord(int X, int Y);
+    private record struct Coord(int X, int Y);
 
+    // Since this is a class, using it in a HashSet will compare based on reference.
+    // This is desired as we store the coordinate of each digit of the number in the dictionary 
+    // with a shared PartCode instance. If a single number borders a symbol multiple times, it will
+    // only have 1 entry in the HashSet.
     [DebuggerDisplay($"{{{nameof(Value)}}}")]
     private class PartCode(int value)
     {
@@ -21,57 +24,36 @@ public class Day3 : IProblem
     {
         var (partCodes, symbols) = ParseInput(input);
 
-        var sum = 0;
+        var codes = new HashSet<PartCode>();
         foreach (var (coord, _) in symbols)
         {
-            var startX = Math.Max(0, coord.X - 1);
-            var endX = Math.Min(input[0].Length, coord.X + 1);
-            var startY = Math.Max(0, coord.Y - 1);
-            var endY = Math.Min(input.Length, coord.Y + 1);
-
-            var symbolCodes = new HashSet<PartCode>();
-            for (var y = startY; y <= endY; y++)
+            foreach (var adjacent in EnumeratePerimeter(coord, input))
             {
-                for (var x = startX; x <= endX; x++)
+                if (partCodes.TryGetValue(adjacent, out var code))
                 {
-                    var searching = new Coord(x, y);
-                    if (partCodes.TryGetValue(searching, out var code))
-                    {
-                        symbolCodes.Add(code);
-                    }
+                    codes.Add(code);
                 }
             }
-
-            sum += symbolCodes.Sum(x => x.Value);
-            symbolCodes.Clear();
         }
 
-        return sum;
+        return codes.Sum(x => x.Value);
     }
 
     [SampleFile("day3.sample.txt", 6756)]
     [PuzzleFile("day3.txt", Expected = 86841457)]
     public int Part2(string[] input)
     {
-        var sum = 0;
         var (partCodes, symbols) = ParseInput(input);
+
+        var sum = 0;
+        var symbolCodes = new HashSet<PartCode>();
         foreach (var (coord, _) in symbols.Where(x => x.Value == '*'))
         {
-            var startX = Math.Max(0, coord.X - 1);
-            var endX = Math.Min(input[0].Length, coord.X + 1);
-            var startY = Math.Max(0, coord.Y - 1);
-            var endY = Math.Min(input.Length, coord.Y + 1);
-
-            var symbolCodes = new HashSet<PartCode>();
-            for (var y = startY; y <= endY; y++)
+            foreach (var adjacent in EnumeratePerimeter(coord, input))
             {
-                for (var x = startX; x <= endX; x++)
+                if (partCodes.TryGetValue(adjacent, out var code))
                 {
-                    var searching = new Coord(x, y);
-                    if (partCodes.TryGetValue(searching, out var code))
-                    {
-                        symbolCodes.Add(code);
-                    }
+                    symbolCodes.Add(code);
                 }
             }
 
@@ -86,6 +68,22 @@ public class Day3 : IProblem
         return sum;
     }
 
+    private static IEnumerable<Coord> EnumeratePerimeter(Coord coord, IReadOnlyList<string> input)
+    {
+        var startX = Math.Max(0, coord.X - 1);
+        var endX = Math.Min(input[0].Length, coord.X + 1);
+        var startY = Math.Max(0, coord.Y - 1);
+        var endY = Math.Min(input.Count, coord.Y + 1);
+
+        for (var y = startY; y <= endY; y++)
+        {
+            for (var x = startX; x <= endX; x++)
+            {
+                yield return new(x, y);
+            }
+        }
+    }
+
     private static (Dictionary<Coord, PartCode>, Dictionary<Coord, char>) ParseInput(
         IReadOnlyList<string> input
     )
@@ -95,14 +93,14 @@ public class Day3 : IProblem
 
         for (var y = 0; y < input.Count; y++)
         {
-            var accum = new List<char>();
+            var numbers = new List<char>();
             var coords = new List<Coord>();
             for (var x = 0; x < input[y].Length; x++)
             {
                 var c = input[y][x];
                 if (char.IsNumber(c))
                 {
-                    accum.Add(c);
+                    numbers.Add(c);
                     coords.Add(new(x, y));
                 }
                 else if (c != '.')
@@ -112,15 +110,15 @@ public class Day3 : IProblem
 
                 // We hit a non-number and we have numbers accumulated OR
                 // We hit the end of the line and we have numbers accumulated
-                if ((!char.IsNumber(c) || x == input[y].Length - 1) && accum.Count > 0)
+                if ((!char.IsNumber(c) || x == input[y].Length - 1) && numbers.Count > 0)
                 {
-                    var code = new PartCode(int.Parse(string.Join("", accum)));
+                    var code = new PartCode(int.Parse(string.Join("", numbers)));
                     foreach (var coord in coords)
                     {
                         partCodes.Add(coord, code);
                     }
 
-                    accum.Clear();
+                    numbers.Clear();
                     coords.Clear();
                 }
             }
