@@ -39,7 +39,6 @@ public class Day3 : IProblem
                     symbols.Add(new(x, y), c);
                 }
 
-
                 // We hit a non-number and we have numbers accumulated OR
                 // We hit the end of the line and we have numbers accumulated
                 if ((!char.IsNumber(c) || x == input[y].Length - 1) && accum.Count > 0)
@@ -77,7 +76,6 @@ public class Day3 : IProblem
                 }
             }
 
-
             sum += symbolCodes.Sum(x => x.Value);
             symbolCodes.Clear();
         }
@@ -85,8 +83,10 @@ public class Day3 : IProblem
         return sum;
     }
 
+    [SampleFile("day3.sample.txt", 6756)]
+    [PuzzleFile("day3.txt")]
     public int Part2(string[] input)
     {
-        throw new NotImplementedException();
+        return 0;
     }
 }

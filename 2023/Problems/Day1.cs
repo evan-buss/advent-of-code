@@ -32,7 +32,6 @@ public class Day1 : IProblem
     [SampleFile("part1.sample.txt", 142)]
     public int Part1(string[] lines)
     {
-        Console.WriteLine("debug test");
         return lines.Sum(GetLineValue);
     }
 
