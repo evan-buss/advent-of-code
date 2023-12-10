@@ -13,7 +13,7 @@ public class ProblemRunnerTerminal<TAssembly> : ProblemRunner<TAssembly>
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        AnsiConsole.MarkupLine($"[rapidblink cyan]{_mode}[/] Mode");
+        AnsiConsole.MarkupLine($"[rapidblink cyan]{Mode}[/] Mode");
 
         var table = new Table()
             .LeftAligned()
@@ -35,15 +35,16 @@ public class ProblemRunnerTerminal<TAssembly> : ProblemRunner<TAssembly>
                 table.Columns[0].Footer("Totals");
                 var correct = 0;
                 var total = 0;
+                var rowIndex = 0;
                 await foreach (var update in RunAsync(cancellationToken))
                 {
-                    totalDuration += update.Duration;
-                    
+                    totalDuration += update.Duration ?? TimeSpan.Zero;
+
                     table.AddRow(
                         update.Day.ToString(),
                         update.Part.ToString(),
                         GetStatusLine(update.Status),
-                        update.Answer.ToString(),
+                        update.Answer?.ToString() ?? "",
                         FormatTimeSpan(update.Duration)
                     );
 
@@ -52,10 +53,13 @@ public class ProblemRunnerTerminal<TAssembly> : ProblemRunner<TAssembly>
                         correct++;
                     }
 
-                    total++;
 
                     table.Columns[2].Footer($"{correct}/{total}").RightAligned();
                     table.Columns[4].Footer(FormatTimeSpan(totalDuration));
+
+                    ctx.Refresh();
+
+                    rowIndex++;
                 }
             });
     }
@@ -66,12 +70,20 @@ public class ProblemRunnerTerminal<TAssembly> : ProblemRunner<TAssembly>
         {
             Status.Correct => "[green]Correct[/]",
             Status.Incorrect => "[red]Incorrect[/]",
-            Status.Unknown => "[white]Unknown[/]"
+            Status.Unknown => "[white]Unknown[/]",
+            Status.Skipped => "[gray]Skipped[/]",
+            _ => throw new InvalidOperationException("Invalid Status")
         };
     }
 
-    private static string FormatTimeSpan(TimeSpan duration)
+    private static string FormatTimeSpan(TimeSpan? duration)
     {
-        return $"{duration.TotalMilliseconds:F}ms";
+        return duration switch
+        {
+            {Minutes: > 0} m => $"{m.Minutes}m {m.Seconds}s {m.Milliseconds}ms",
+            {Seconds: > 0} s => $"{s.Seconds}s {s.Milliseconds}ms",
+            { } d => $"{d.TotalMilliseconds:F}ms",
+            null => "",
+        };
     }
 }

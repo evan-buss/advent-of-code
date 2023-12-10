@@ -14,47 +14,55 @@ public enum Status
 {
     Correct,
     Incorrect,
-    Unknown
+    Unknown,
+    Skipped,
 }
 
-public record ProblemPartResult(int Day, int Part, Status Status, TimeSpan Duration, int Answer);
+public record ProblemPartResult(int Day, int Part, Status Status, TimeSpan? Duration, int? Answer);
 
 public class ProblemRunner<TAssemblyType>(ProblemRunnerMode mode, int? day = null)
 {
     private readonly List<(IProblem Problem, int Day)> _problems = FindProblems(day);
-    protected readonly ProblemRunnerMode _mode = mode;
+    protected readonly ProblemRunnerMode Mode = mode;
 
     protected async IAsyncEnumerable<ProblemPartResult> RunAsync(
-        CancellationToken cancellationToken = default
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
-        foreach (var (problem, day) in _problems)
+        foreach (var (problem, problemDay) in _problems)
         {
-            var result = await RunPart(problem, day, 1, cancellationToken);
-            if (result is not null)
+            await foreach (var result in RunPart(problem, problemDay, 1, cancellationToken))
+            {
                 yield return result;
+            }
 
-            result = await RunPart(problem, day, 2, cancellationToken);
-            if (result is not null)
+            await foreach (var result in RunPart(problem, problemDay, 2, cancellationToken))
+            {
                 yield return result;
+            }
         }
     }
 
-    private async Task<ProblemPartResult?> RunPart(
+    private async IAsyncEnumerable<ProblemPartResult> RunPart(
         IProblem problem,
         int day,
         int part,
-        CancellationToken cancellationToken = default
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
-        var className = problem.GetType().Name;
         var methodName = part == 1 ? nameof(IProblem.Part1) : nameof(IProblem.Part2);
-        var assertions = GetFileInputForMethod(problem.GetType().GetMethod(methodName), mode);
+        var assertions = GetFileInputForMethod(problem.GetType().GetMethod(methodName), Mode);
 
         // For example if we are on part 1, we don't have any data file or expected result for part 2, so don't run it.
         if (assertions is null)
         {
-            return null;
+            yield break;
+        }
+
+        if (assertions.Skip)
+        {
+            yield return new(day, part, Status.Skipped, null, null);
+            yield break;
         }
 
         var lines = await File.ReadAllLinesAsync(
@@ -66,7 +74,7 @@ public class ProblemRunner<TAssemblyType>(ProblemRunnerMode mode, int? day = nul
         var answer = part == 1 ? problem.Part1(lines) : problem.Part2(lines);
         var elapsed = Stopwatch.GetElapsedTime(start);
 
-        return assertions.Expected switch
+        yield return assertions.Expected switch
         {
             > 0 when answer != assertions.Expected
                 => new(day, part, Status.Incorrect, elapsed, answer),
@@ -87,7 +95,7 @@ public class ProblemRunner<TAssemblyType>(ProblemRunnerMode mode, int? day = nul
             .Where(x => x.DayAttribute is not null)
             .Where(x => day is null || x.DayAttribute!.Day == day)
             .OrderBy(x => x.DayAttribute?.Day)
-            .Select(x => ((IProblem)Activator.CreateInstance(x.Type)!, x.DayAttribute!.Day))
+            .Select(x => ((IProblem) Activator.CreateInstance(x.Type)!, x.DayAttribute!.Day))
             .ToList();
         return problems;
     }
@@ -108,7 +116,8 @@ public class ProblemRunner<TAssemblyType>(ProblemRunnerMode mode, int? day = nul
         var attributeType = mode switch
         {
             ProblemRunnerMode.Sample => typeof(SampleFileAttribute),
-            ProblemRunnerMode.Puzzle => typeof(PuzzleFileAttribute)
+            ProblemRunnerMode.Puzzle => typeof(PuzzleFileAttribute),
+            _ => throw new InvalidOperationException("Invalid ProblemRunnerMode")
         };
 
         return attributes.Find(x => x.GetType() == attributeType);

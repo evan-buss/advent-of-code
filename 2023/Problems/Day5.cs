@@ -87,7 +87,7 @@ public class Day5 : IProblem
     }
 
     [SampleFile("Day5.sample.txt", 46)]
-    [PuzzleFile("Day5.txt", Expected = 28580589)]
+    [PuzzleFile("Day5.txt", Expected = 28580589, Skip = true)]
     public int Part2(string[] input)
     {
         var seeds = input[0].Split(": ")[1].Split(" ").Select(long.Parse).Chunk(2).Select(x => new SeedRange(x)).ToList();

@@ -6,6 +6,8 @@ public abstract class BaseFileAttribute(string filename) : Attribute
     public string Filename { get; } = filename;
 
     public int Expected { get; init; }
+        
+    public bool Skip { get; init; }
 }
 
 [AttributeUsage(AttributeTargets.Method)]
