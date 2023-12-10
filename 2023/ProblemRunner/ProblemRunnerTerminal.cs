@@ -36,6 +36,7 @@ public class ProblemRunnerTerminal<TAssembly> : ProblemRunner<TAssembly>
                 var correct = 0;
                 var total = 0;
                 var rowIndex = 0;
+
                 await foreach (var update in RunAsync(cancellationToken))
                 {
                     totalDuration += update.Duration ?? TimeSpan.Zero;
@@ -53,6 +54,12 @@ public class ProblemRunnerTerminal<TAssembly> : ProblemRunner<TAssembly>
                         correct++;
                     }
 
+                    if (update.Status != Status.Running)
+                    {
+                        table.Rows.RemoveAt(rowIndex - 1);
+                        rowIndex--;
+                        total++;
+                    }
 
                     table.Columns[2].Footer($"{correct}/{total}").RightAligned();
                     table.Columns[4].Footer(FormatTimeSpan(totalDuration));
@@ -72,6 +79,7 @@ public class ProblemRunnerTerminal<TAssembly> : ProblemRunner<TAssembly>
             Status.Incorrect => "[red]Incorrect[/]",
             Status.Unknown => "[white]Unknown[/]",
             Status.Skipped => "[gray]Skipped[/]",
+            Status.Running => "[cyan]Running[/]",
             _ => throw new InvalidOperationException("Invalid Status")
         };
     }

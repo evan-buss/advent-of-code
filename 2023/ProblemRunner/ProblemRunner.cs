@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Problems.Attributes;
 
 namespace Problems;
@@ -16,6 +17,7 @@ public enum Status
     Incorrect,
     Unknown,
     Skipped,
+    Running,
 }
 
 public record ProblemPartResult(int Day, int Part, Status Status, TimeSpan? Duration, int? Answer);
@@ -69,6 +71,8 @@ public class ProblemRunner<TAssemblyType>(ProblemRunnerMode mode, int? day = nul
             Path.Join("Inputs", assertions.Filename),
             cancellationToken
         );
+
+        yield return new(day, part, Status.Running, null, null);
 
         var start = Stopwatch.GetTimestamp();
         var answer = part == 1 ? problem.Part1(lines) : problem.Part2(lines);
