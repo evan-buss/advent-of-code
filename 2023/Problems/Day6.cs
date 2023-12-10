@@ -12,25 +12,9 @@ public class Day6 : IProblem
         var times = ParseMultipleRaces(input[0]);
         var distances = ParseMultipleRaces(input[1]);
 
-        var recordsPerRace = new List<int>();
-        foreach (var (time, distance) in times.Zip(distances))
-        {
-            var records = 0;
-            for (var holdSeconds = 0; holdSeconds <= time; holdSeconds++)
-            {
-                var moveTime = time - holdSeconds;
-                var distanceCovered = moveTime * holdSeconds;
-
-                if (distanceCovered > distance)
-                {
-                    records++;
-                }
-            }
-
-            recordsPerRace.Add(records);
-        }
-
-        return recordsPerRace.Aggregate(1, (acc, curr) => acc * curr);
+        return times
+            .Zip(distances)
+            .Aggregate(1, (acc, tuple) => acc * (int)BeatRecords(tuple.First, tuple.Second));
     }
 
     [SampleFile("day6.sample.txt", 71_503)]
@@ -40,8 +24,13 @@ public class Day6 : IProblem
         var time = ParseSingleRace(input[0]);
         var distance = ParseSingleRace(input[1]);
 
-        var lowestSeconds = long.MaxValue;
-        var highestSeconds = long.MinValue;
+        return (int)BeatRecords(time, distance);
+    }
+
+    private static long BeatRecords(long time, long distance)
+    {
+        long lowestSeconds = 0;
+        long highestSeconds = 0;
 
         for (var holdSeconds = 0; holdSeconds <= time; holdSeconds++)
         {
@@ -67,7 +56,7 @@ public class Day6 : IProblem
             }
         }
 
-        return (int)highestSeconds - (int)lowestSeconds + 1;
+        return highestSeconds - lowestSeconds + 1;
     }
 
     private static int[] ParseMultipleRaces(string line)
