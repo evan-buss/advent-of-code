@@ -43,7 +43,10 @@ public class Day5 : IProblem
 
         public long? GetSource(long destination)
         {
-            if (destination < _destinationRangeStart || destination >= _destinationRangeStart + _length)
+            if (
+                destination < _destinationRangeStart
+                || destination >= _destinationRangeStart + _length
+            )
             {
                 return null;
             }
@@ -64,15 +67,16 @@ public class Day5 : IProblem
             _ranges = lines.Skip(1).Select((x) => new Range(x)).ToList();
         }
 
-
         public long GetDestination(long source)
         {
-            return _ranges.Select(x => x.GetDestination(source)).FirstOrDefault(x => x != null) ?? source;
+            return _ranges.Select(x => x.GetDestination(source)).FirstOrDefault(x => x != null)
+                ?? source;
         }
 
         public long GetSource(long destination)
         {
-            return _ranges.Select(x => x.GetSource(destination)).FirstOrDefault(x => x != null) ?? destination;
+            return _ranges.Select(x => x.GetSource(destination)).FirstOrDefault(x => x != null)
+                ?? destination;
         }
     };
 
@@ -81,26 +85,48 @@ public class Day5 : IProblem
     public int Part1(string[] input)
     {
         var seeds = new List<long>(input[0].Split(": ")[1].Split(" ").Select(long.Parse));
-        var buckets = input[2..].ChunkBy(line => line.Length == 0).Select(x => new Bucket(x)).ToList();
+        var buckets = input[2..]
+            .ChunkBy(line => line.Length == 0)
+            .Select(x => new Bucket(x))
+            .ToList();
 
-        return (int) seeds.Select(seed => buckets.Aggregate(seed, (current, bucket) => bucket.GetDestination(current))).Min();
+        return (int)
+            seeds
+                .Select(
+                    seed =>
+                        buckets.Aggregate(seed, (current, bucket) => bucket.GetDestination(current))
+                )
+                .Min();
     }
 
     [SampleFile("Day5.sample.txt", 46)]
     [PuzzleFile("Day5.txt", Expected = 28580589, Skip = true)]
     public int Part2(string[] input)
     {
-        var seeds = input[0].Split(": ")[1].Split(" ").Select(long.Parse).Chunk(2).Select(x => new SeedRange(x)).ToList();
-        var buckets = input[2..].ChunkBy(line => line.Length == 0).Select(x => new Bucket(x)).Reverse().ToList();
+        var seeds = input[0]
+            .Split(": ")[1]
+            .Split(" ")
+            .Select(long.Parse)
+            .Chunk(2)
+            .Select(x => new SeedRange(x))
+            .ToList();
+        var buckets = input[2..]
+            .ChunkBy(line => line.Length == 0)
+            .Select(x => new Bucket(x))
+            .Reverse()
+            .ToList();
 
         long location = 1;
         while (true)
         {
-            var source = buckets.Aggregate(location, (current, bucket) => bucket.GetSource(current));
+            var source = buckets.Aggregate(
+                location,
+                (current, bucket) => bucket.GetSource(current)
+            );
 
             if (seeds.Exists(seed => seed.InRange(source)))
             {
-                return (int) location;
+                return (int)location;
             }
 
             location++;

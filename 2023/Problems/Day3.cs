@@ -9,7 +9,7 @@ public class Day3 : IProblem
     private record struct Coord(int X, int Y);
 
     // Since this is a class, using it in a HashSet will compare based on reference.
-    // This is desired as we store the coordinate of each digit of the number in the dictionary 
+    // This is desired as we store the coordinate of each digit of the number in the dictionary
     // with a shared PartCode instance. If a single number borders a symbol multiple times, it will
     // only have 1 entry in the HashSet.
     [DebuggerDisplay($"{{{nameof(Value)}}}")]
