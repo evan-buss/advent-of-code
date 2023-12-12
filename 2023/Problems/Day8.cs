@@ -17,7 +17,7 @@ public partial class Day8 : IProblem
             .Select(line => InstructionRegex().Match(line))
             .ToDictionary(
                 match => match.Groups[1].Value,
-                match => new[] {match.Groups[2].Value, match.Groups[3].Value}
+                match => new[] { match.Groups[2].Value, match.Groups[3].Value }
             );
 
         var count = 0;
@@ -57,7 +57,7 @@ public partial class Day8 : IProblem
             .Select(line => InstructionRegex().Match(line))
             .ToDictionary(
                 match => match.Groups[1].Value,
-                match => new[] {match.Groups[2].Value, match.Groups[3].Value}
+                match => new[] { match.Groups[2].Value, match.Groups[3].Value }
             );
 
         var starts = map.Keys.Where(x => x.EndsWith('A')).ToArray();
@@ -89,9 +89,9 @@ public partial class Day8 : IProblem
         }
 
         var value = loops.Aggregate(LCM);
-        
-        // TODO: Incorrect because it overflows an int. Need to set up runner to work with long... 
-        return (int) value;
+
+        // TODO: Incorrect because it overflows an int. Need to set up runner to work with long...
+        return (int)value;
     }
 
     private long LCM(long a, long b)
@@ -103,7 +103,6 @@ public partial class Day8 : IProblem
     {
         return b == 0 ? a : GCD(b, a % b);
     }
-
 
     // 16, 8
     // 8, 8

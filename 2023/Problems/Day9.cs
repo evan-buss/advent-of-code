@@ -12,10 +12,7 @@ public class Day9 : IProblem
         long sum = 0;
         foreach (var line in input)
         {
-            var history = new List<List<long>>
-            {
-                line.Split(" ").Select(long.Parse).ToList()
-            };
+            var history = new List<List<long>> { line.Split(" ").Select(long.Parse).ToList() };
 
             while (history[^1].Any(x => x != 0))
             {
@@ -44,9 +41,9 @@ public class Day9 : IProblem
             sum += history[0][^1];
         }
 
-        return (int) sum;
+        return (int)sum;
     }
-    
+
     [SampleFile("day9.sample.txt", 2)]
     [PuzzleFile("day9.txt", Expected = 919)]
     public int Part2(string[] input)
@@ -54,10 +51,7 @@ public class Day9 : IProblem
         long sum = 0;
         foreach (var line in input)
         {
-            var history = new List<List<long>>
-            {
-                line.Split(" ").Select(long.Parse).ToList()
-            };
+            var history = new List<List<long>> { line.Split(" ").Select(long.Parse).ToList() };
 
             while (history[^1].Any(x => x != 0))
             {
@@ -86,6 +80,6 @@ public class Day9 : IProblem
             sum += history[0][0];
         }
 
-        return (int) sum;
+        return (int)sum;
     }
 }
