@@ -5,8 +5,7 @@ let file =
 
 type Report = int seq seq
 type Level = int seq
-type Safety = { GapValid: bool; OrderValid: bool }
-type LevelSafety = Safety seq
+type LevelSafety = bool seq
 
 let input file : Report =
     file |> File.ReadLines |> Seq.map (fun l -> l.Split(" ") |> Seq.map int)
@@ -22,26 +21,27 @@ let computeSafety (level: Level) =
         |> Seq.map (fun (prev, curr) -> sign prev = sign curr)
         |> Seq.append [ true ]
 
-    // the first item is always in order and pairwise outputs seq length - 1 items, so we fill the gap so the zip works
-    Seq.zip validGap validOrder
-    |> Seq.map (fun (gap, order) -> { GapValid = gap; OrderValid = order })
+    Seq.zip validGap validOrder |> Seq.map (fun (gap, order) -> gap && order)
 
-let isSafe (safety: LevelSafety) =
-    safety |> Seq.forall (fun safety -> safety.GapValid && safety.OrderValid)
-
-let filterUnsafe (safety: LevelSafety) index : LevelSafety =
-    safety |> Seq.indexed |> Seq.filter (fun (i, _) -> i <> index) |> Seq.map snd
+let isSafe (safety: LevelSafety) = safety |> Seq.forall id
 
 let dampener safety =
     let unsafeIndices =
         safety
         |> Seq.indexed
-        |> Seq.filter (fun (_, (safety)) -> not safety.GapValid || not safety.OrderValid)
+        |> Seq.filter (fun (_, safety) -> not safety)
         |> Seq.map fst
 
     match Seq.isEmpty unsafeIndices with
     | true -> Seq.singleton safety
-    | false -> unsafeIndices |> Seq.map (filterUnsafe safety)
+    | false ->
+        // output every possible combination of safe levels by removing one unsafe level
+        unsafeIndices
+        |> Seq.map (fun unsafeIndex ->
+            safety
+            |> Seq.indexed
+            |> Seq.filter (fun (i, _) -> i <> unsafeIndex)
+            |> Seq.map snd)
 
 let part1 (input: Report) =
     input |> Seq.filter (computeSafety >> isSafe) |> Seq.length
