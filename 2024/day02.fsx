@@ -33,15 +33,15 @@ let filterUnsafe (safety: LevelSafety) index : LevelSafety =
     safety |> Seq.indexed |> Seq.filter (fun (i, _) -> i <> index) |> Seq.map snd
 
 let dampener safety =
-    let errorIndexes =
+    let unsafeIndices =
         safety
         |> Seq.indexed
         |> Seq.filter (fun (_, (safety)) -> not safety.GapValid || not safety.OrderValid)
         |> Seq.map fst
 
-    match Seq.isEmpty errorIndexes with
+    match Seq.isEmpty unsafeIndices with
     | true -> Seq.singleton safety
-    | false -> errorIndexes |> Seq.map (filterUnsafe safety)
+    | false -> unsafeIndices |> Seq.map (filterUnsafe safety)
 
 let part1 (input: Report) =
     input |> Seq.filter (computeSafety >> isSafe) |> Seq.length
