@@ -28,16 +28,7 @@ let isSafe (safety: LevelSafety) = safety |> Seq.forall id
 let dampener safety =
     match safety |> isSafe with
     | true -> true
-    | false ->
-        let unsafeIndices =
-            safety |> Seq.indexed |> Seq.filter (fun (_, s) -> not s) |> Seq.map fst
-
-        let removeIndex i safety =
-            safety |> Seq.indexed |> Seq.filter (fun (j, _) -> j <> i) |> Seq.map snd
-
-        // check if any of the unsafe indices can be removed and make the level safe
-        unsafeIndices
-        |> Seq.exists (fun unsafeI -> safety |> removeIndex unsafeI |> isSafe)
+    | false -> safety |> Seq.filter not |> Seq.length = 1 // we can replace a single error
 
 let part1 (input: Report) =
     input |> Seq.filter (computeSafety >> isSafe) |> Seq.length
