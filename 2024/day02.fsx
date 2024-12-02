@@ -10,7 +10,7 @@ type Level = int seq
 type LevelSafety = (bool * bool) seq
 
 let input file : Report =
-    file |> File.ReadLines |> Seq.map (fun c -> c.Split(" ") |> Seq.map int)
+    file |> File.ReadLines |> Seq.map (fun l -> l.Split(" ") |> Seq.map int)
 
 let computeSafety (level: Level) : LevelSafety =
     let diff =
@@ -29,7 +29,7 @@ let computeSafety (level: Level) : LevelSafety =
     Seq.append [ true ] validOrder |> Seq.zip validGap
 
 let isSafe (safety: LevelSafety) =
-    safety |> (fun res -> (Seq.forall fst res && Seq.forall snd res))
+    safety |> Seq.forall (fun (gap, order) -> gap && order)
 
 let filterUnsafe (safety: LevelSafety) index : LevelSafety =
     safety |> Seq.indexed |> Seq.filter (fun (i, _) -> i <> index) |> Seq.map snd
@@ -42,9 +42,9 @@ let dampener safety =
         |> Seq.map fst
 
     if Seq.isEmpty errorIndexes then
-        Seq.ofList ([ safety ])
+        Seq.ofList [ safety ]
     else
-        errorIndexes |> Seq.map (fun i -> filterUnsafe safety i)
+        errorIndexes |> Seq.map (filterUnsafe safety)
 
 let part1 (input: Report) =
     input
