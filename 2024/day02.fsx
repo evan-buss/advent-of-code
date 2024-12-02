@@ -32,14 +32,12 @@ let dampener safety =
         let unsafeIndices =
             safety |> Seq.indexed |> Seq.filter (fun (_, s) -> not s) |> Seq.map fst
 
+        let removeIndex i safety =
+            safety |> Seq.indexed |> Seq.filter (fun (j, _) -> j <> i) |> Seq.map snd
+
         // check if any of the unsafe indices can be removed and make the level safe
         unsafeIndices
-        |> Seq.exists (fun unsafeI ->
-            safety
-            |> Seq.indexed
-            |> Seq.filter (fun (i, _) -> i <> unsafeI)
-            |> Seq.map snd
-            |> isSafe)
+        |> Seq.exists (fun unsafeI -> safety |> removeIndex unsafeI |> isSafe)
 
 let part1 (input: Report) =
     input |> Seq.filter (computeSafety >> isSafe) |> Seq.length
