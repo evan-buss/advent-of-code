@@ -9,16 +9,13 @@ let file =
 let input file =
     file
     |> File.ReadAllLines
-    |> Array.map _.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-    |> Array.map (fun parts ->
-        match parts with
-        | [| l; r |] -> int l, int r
-        | _ -> failwithf $"Invalid input line format: %A{parts}")
+    |> Array.map _.Split(" ", StringSplitOptions.RemoveEmptyEntries)
+    |> Array.map (fun line -> int line[0], int line[1])
     |> Array.unzip
-    ||> (fun l r -> Array.sort l, Array.sort r)
 
 let part1 left right =
-    Array.zip left right |> Array.sumBy (fun (x, y) -> abs (y - x))
+    Array.zip (Array.sort left) (Array.sort right)
+    |> Array.sumBy (fun (x, y) -> abs (y - x))
 
 let part2 left right =
     let counts = right |> Array.countBy id |> Map
