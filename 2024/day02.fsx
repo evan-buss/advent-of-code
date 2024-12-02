@@ -26,30 +26,26 @@ let computeSafety (level: Level) =
 let isSafe (safety: LevelSafety) = safety |> Seq.forall id
 
 let dampener safety =
-    let unsafeIndices =
-        safety
-        |> Seq.indexed
-        |> Seq.filter (fun (_, safety) -> not safety)
-        |> Seq.map fst
-
-    match Seq.isEmpty unsafeIndices with
-    | true -> Seq.singleton safety
+    match safety |> isSafe with
+    | true -> true
     | false ->
-        // output every possible combination of safe levels by removing one unsafe level
+        let unsafeIndices =
+            safety |> Seq.indexed |> Seq.filter (fun (_, s) -> not s) |> Seq.map fst
+
+        // check if any of the unsafe indices can be removed and make the level safe
         unsafeIndices
-        |> Seq.map (fun unsafeIndex ->
+        |> Seq.exists (fun unsafeI ->
             safety
             |> Seq.indexed
-            |> Seq.filter (fun (i, _) -> i <> unsafeIndex)
-            |> Seq.map snd)
+            |> Seq.filter (fun (i, _) -> i <> unsafeI)
+            |> Seq.map snd
+            |> isSafe)
 
 let part1 (input: Report) =
     input |> Seq.filter (computeSafety >> isSafe) |> Seq.length
 
 let part2 (input: Report) =
-    input
-    |> Seq.filter (computeSafety >> dampener >> Seq.exists isSafe)
-    |> Seq.length
+    input |> Seq.filter (computeSafety >> dampener) |> Seq.length
 
 let lines = input file |> Seq.toList
 
