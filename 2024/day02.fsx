@@ -39,10 +39,9 @@ let dampener safety =
         |> Seq.filter (fun (_, (safety)) -> not safety.GapValid || not safety.OrderValid)
         |> Seq.map fst
 
-    if Seq.isEmpty errorIndexes then
-        Seq.ofList [ safety ]
-    else
-        errorIndexes |> Seq.map (filterUnsafe safety)
+    match Seq.isEmpty errorIndexes with
+    | true -> Seq.singleton safety
+    | false -> errorIndexes |> Seq.map (filterUnsafe safety)
 
 let part1 (input: Report) =
     input |> Seq.filter (computeSafety >> isSafe) |> Seq.length
