@@ -11,102 +11,108 @@ let puzzleMap puzzleArray =
     |> Array.concat
     |> Map.ofArray
 
+type Direction =
+    | Up
+    | Down
+    | Left
+    | Right
+
+type Coordinate = int * int
+
+type Guard =
+    { Direction: Direction
+      Position: Coordinate }
 
 module Guard =
-    type Direction =
-        | Up
-        | Down
-        | Left
-        | Right
 
-    type Coordinate = int * int
+    // create from character and position
+    let create c pos =
+        { Direction =
+            match c with
+            | '^' -> Up
+            | 'V' -> Down
+            | '<' -> Left
+            | '>' -> Right
+            | _ -> failwith "Invalid guard character"
+          Position = pos }
 
-    type T =
-        { Direction: Direction
-          Position: Coordinate }
+    let private nextPosition guard =
+        let delta =
+            match guard.Direction with
+            | Up -> (-1, 0)
+            | Down -> (1, 0)
+            | Left -> (0, -1)
+            | Right -> (0, 1)
 
-        // create from character and position
-        static member create c pos =
-            { Direction =
-                match c with
-                | '^' -> Up
-                | 'V' -> Down
-                | '<' -> Left
-                | '>' -> Right
-                | _ -> failwith "Invalid guard character"
-              Position = pos }
+        fst guard.Position + fst delta, snd guard.Position + snd delta
 
-        member private this.nextPosition() =
-            let delta =
-                match this.Direction with
-                | Up -> (-1, 0)
-                | Down -> (1, 0)
-                | Left -> (0, -1)
-                | Right -> (0, 1)
+    let private rotate guard =
+        let newDirection =
+            match guard.Direction with
+            | Up -> Right
+            | Right -> Down
+            | Down -> Left
+            | Left -> Up
 
-            fst this.Position + fst delta, snd this.Position + snd delta
-
-        member private this.rotate() =
-            let newDirection =
-                match this.Direction with
-                | Up -> Right
-                | Right -> Down
-                | Down -> Left
-                | Left -> Up
-
-            { this with Direction = newDirection }
+        { guard with Direction = newDirection }
 
 
-        // a move is either a rotation or a position change based on next position
-        member this.move map =
-            match map |> Map.tryFind (this.nextPosition ()) with
-            | Some(c) when c = '#' || c = 'O' -> this.rotate ()
-            | _ ->
-                { this with
-                    Position = this.nextPosition () }
+    // a move is either a rotation or a position change based on next position
+    let move guard map =
+        match map |> Map.tryFind (nextPosition guard) with
+        | Some(c) when c = '#' || c = 'O' -> rotate guard
+        | _ ->
+            { guard with
+                Position = nextPosition guard }
 
 let findGuard map =
     map
     |> Map.pick (fun pos c ->
         match c with
-        | c when c <> '.' && c <> '#' -> Some(Guard.T.create c pos)
+        | c when c <> '.' && c <> '#' -> Some(Guard.create c pos)
         | _ -> None)
 
 
 let part1 () =
-    let map = parsePuzzle puzzleFile |> puzzleMap
+    let map = puzzleFile |> parsePuzzle |> puzzleMap
     let guard = findGuard map
 
-    let visited = Set.empty<(int * int)>
+    let visited = Set.empty<Coordinate>
 
-    let rec move map visited (guard: Guard.T) =
-        match map |> Map.tryFind guard.Position with
+    let rec move map visited (guard: Guard) =
+        match Map.tryFind guard.Position map with
         | None -> visited
-        | Some _ -> move map (Set.add guard.Position visited) (guard.move map)
+        | Some _ -> move map (Set.add guard.Position visited) (Guard.move guard map)
 
     move map visited guard
 
-let part2 () =
-    let map = parsePuzzle puzzleFile |> puzzleMap
+let part2 coords =
+    let map = puzzleFile |> parsePuzzle |> puzzleMap
     let guard = findGuard map
 
-    let rec move map rotations (guard: Guard.T) =
-        match map |> Map.tryFind guard.Position with
+    let rec move map rotations guard =
+        match Map.tryFind guard.Position map with
         | None -> false // off map
         | Some _ ->
-            let movedGuard = guard.move map
+            let movedGuard = Guard.move guard map
 
-            match rotations |> Set.contains movedGuard with
+            match Set.contains movedGuard rotations with
             | true -> true
-            | false -> move map (rotations |> Set.add movedGuard) movedGuard
+            | false ->
+                match movedGuard.Direction = guard.Direction with
+                | true -> move map rotations movedGuard
+                | false -> move map (Set.add movedGuard rotations) movedGuard
 
     // loop is detected with a set that stores the guard state.
     // if we get a duplicate guard (same position and direction), we are in a loop
+    // only store rotations occurs to save memory
 
-    part1 ()
-    |> Set.toArray
-    |> Array.Parallel.filter (fun position -> move (map |> Map.add position 'O') Set.empty<Guard.T> guard)
-    |> Seq.length
+    coords
+    |> Array.Parallel.filter (fun coord -> move (Map.add coord 'O' map) Set.empty guard)
+    |> Array.length
 
-printfn $"Part 1: {part1 () |> Set.count}"
-printfn $"Part 2: {part2 ()}"
+
+let coords = part1 ()
+
+printfn $"Part 1: {coords |> Set.count}"
+printfn $"Part 2: {coords |> Set.toArray |> part2}"
