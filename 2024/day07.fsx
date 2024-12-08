@@ -1,17 +1,8 @@
-open System.Collections.Generic
+open System.Collections.Concurrent
 
 let memoize (f: 'a -> 'b) =
-    let cache = Dictionary<'a, 'b>()
-    let lockObj = obj ()
-
-    fun x ->
-        lock lockObj (fun () ->
-            match cache.TryGetValue(x) with
-            | true, v -> v
-            | false, _ ->
-                let v = f x
-                cache.Add(x, v)
-                v)
+    let cache = ConcurrentDictionary<'a, 'b>()
+    fun x -> cache.GetOrAdd(x, (fun k -> f k))
 
 let puzzleFile =
     fsi.CommandLineArgs |> Array.tryItem 1 |> Option.defaultValue "sample.txt"
