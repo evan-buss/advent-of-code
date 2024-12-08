@@ -49,19 +49,20 @@ let rec permutations length items =
 let memoizedPermutations =
     memoize (fun (length, items) -> permutations length items)
 
-let calibrate operators =
-    puzzleFile
-    |> parsePuzzle
-    |> Array.Parallel.choose (fun (answer: int64, numbers) ->
+let calibrate operators puzzle =
+    puzzle
+    |> Array.Parallel.choose (fun (answer: int64, (numbers: int64 array)) ->
         memoizedPermutations (numbers.Length - 1, operators)
         |> Array.tryFind (fun ops -> compute ops numbers = answer)
         |> Option.map (fun _ -> answer))
     |> Array.sum
 
-let part1 () = calibrate [| Add; Multiply |]
+let part1 puzzle = calibrate [| Add; Multiply |] puzzle
 
-let part2 () = calibrate [| Add; Multiply; Concat |]
+let part2 puzzle =
+    calibrate [| Add; Multiply; Concat |] puzzle
 
+let puzzle = puzzleFile |> parsePuzzle
 
-printfn $"Part 1: {part1 ()}"
-printfn $"Part 2: {part2 ()}"
+printfn $"Part 1: {part1 puzzle}"
+printfn $"Part 2: {part2 puzzle}"
