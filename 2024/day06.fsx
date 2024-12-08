@@ -49,7 +49,7 @@ module Guard =
         member this.move map =
             let updated =
                 match map |> Map.tryFind (this.nextPosition ()) with
-                | Some('#') -> this.rotate ()
+                | Some(c) when c = '#' || c = 'O' -> this.rotate ()
                 | _ -> this
 
             { updated with
@@ -81,9 +81,44 @@ let part1 () =
         // printfn $"G: %A{guard}"
 
         match map |> Map.tryFind guard.Position with
-        | None -> Set.count visited
+        | None -> visited
         | Some _ -> move map (Set.add guard.Position visited) (guard.move map)
 
     move map visited guard
 
-printfn $"Part 1: {part1 ()}"
+let part2 () =
+    let map = parsePuzzle puzzleFile |> puzzleMap
+    let guardPos = Map.findKey (fun _ v -> v <> '.' && v <> '#') map
+    let guardDir = Map.find guardPos map |> toDirection
+
+    let guard: Guard.T =
+        { Direction = guardDir
+          Position = guardPos }
+
+    let rec move map rotations (guard: Guard.T) : bool =
+        match map |> Map.tryFind guard.Position with
+        | None -> false
+        | Some _ ->
+            let origDirection = guard.Direction
+            let newGuard = guard.move map
+
+            if origDirection <> newGuard.Direction then
+                match rotations |> Set.contains guard.Position with
+                | true -> true // we looped
+                | false -> move map (Set.add guard.Position rotations) newGuard
+            else
+                move map rotations newGuard
+
+    part1 ()
+    |> Set.filter (fun c -> c <> guard.Position)
+    |> Seq.filter (fun position ->
+        // printfn $"%A{position}"
+        // for each position in the traveled path, place an obstacle and see if we get a loop
+        let rotations = Set.empty<(int * int)>
+        let obstacleMap = map |> Map.add position 'O'
+        let output = move obstacleMap rotations guard
+        output)
+    |> Seq.length
+
+printfn $"Part 1: {part1 () |> Set.count}"
+printfn $"Part 2: {part2 ()}"
