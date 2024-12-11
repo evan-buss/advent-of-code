@@ -2,7 +2,7 @@ let path =
     fsi.CommandLineArgs |> Array.tryItem 1 |> Option.defaultValue "sample.txt"
 
 type Block =
-    | File of Id: int64
+    | File of int64
     | Free
 
 let charToInt = System.Char.GetNumericValue >> int
@@ -18,19 +18,15 @@ let puzzle =
                Free |])
     |> Array.concat
 
-printfn "%A" puzzle.Length
-
-let test =
-    puzzle
-    |> Array.fold
-        (fun (acc, currentChunk) item ->
-            match currentChunk with
-            | [] -> (acc, [ item ])
-            | head :: _ when head = item -> (acc, item :: currentChunk)
-            | _ -> (List.rev currentChunk :: acc, [ item ]))
-        ([], [])
-    |> fun (acc, lastChunk) -> (List.rev lastChunk :: acc)
-    |> List.rev
+let debug disk =
+    System.String.Concat(
+        disk
+        |> Seq.concat
+        |> Seq.map (fun c ->
+            match c with
+            | File id -> string id
+            | Free -> ".")
+    )
 
 let frag original =
     let mutable l = 0
@@ -52,56 +48,63 @@ let frag original =
     disk
 
 let chunkType (chunk: Block list) =
-    // match chunk |> List.forall (fun c -> c = chunk[0]) with
-    // | true -> chunk[0]
-    // | false -> failwith "invalid chunk"
+    match chunk |> List.forall (fun c -> c = chunk[0]) with
+    | true -> chunk[0]
+    | false -> failwith "invalid chunk"
 
-    chunk[0]
+let defrag original =
+    // Split into file and free chunks of the same type and File id
+    // Ex. [File 1; File 1; Free; Free; File 3;] becomes [[File 1; File1;]; [Free; Free;]; [File 3;]]
+    let disk =
+        ResizeArray(
+            original
+            |> Array.fold
+                (fun (acc, currentChunk) item ->
+                    match currentChunk with
+                    | [] -> (acc, [ item ])
+                    | head :: _ when head = item -> (acc, item :: currentChunk)
+                    | _ -> (List.rev currentChunk :: acc, [ item ]))
+                ([], [])
+            |> fun (acc, lastChunk) -> (List.rev lastChunk :: acc)
+            |> List.rev
+            |> List.map (fun block -> (false, block))
+        )
 
+    let chunk (chunk: bool * Block list) = chunk |> snd
+    let chunkMoved (chunk: bool * Block list) = chunk |> fst
 
-let defrag (diskI: Block list list) =
-    let mutable disk = diskI
+    let mutable blockIndex = disk.Count - 1
 
-    printfn "disk length %A" disk.Length
-
-    for blockIndex in (disk.Length - 1) .. - 1 .. 0 do
-
-        // if blockIndex % 1000 = 0 then
-        //     printfn "Block %A" blockIndex
-
-        // printfn "iterating?"
-        // iterate left to right to find open spaces
+    while blockIndex > 0 do
         let mutable found = false
 
-        let mutable firstOpen = 0
+        let currentChunk = disk[blockIndex]
 
-        if chunkType disk[blockIndex] <> Free then
-            let mutable openIndex = firstOpen
+        // File chunk that hasn't been moved yet
+        if not (chunkMoved currentChunk) && chunkType (chunk currentChunk) <> Free then
+            let mutable openIndex = 0
 
             while openIndex < blockIndex && not found do
-
-                if chunkType disk[openIndex] = Free && not found then
-                    let openLength = disk[openIndex].Length
-                    let blockLength = disk[blockIndex].Length
+                if chunkType (chunk disk[openIndex]) = Free then
+                    let openLength = (chunk disk[openIndex]).Length
+                    let blockLength = (chunk currentChunk).Length
 
                     if openLength >= blockLength then
-                        disk <- List.updateAt openIndex disk[blockIndex] disk // Update open with block value
-                        disk <- List.updateAt blockIndex (List.replicate blockLength Free) disk // Free block space
+                        // printfn "%A" <| debug disk
+                        found <- true
+                        disk[openIndex] <- (true, chunk currentChunk)
+                        disk[blockIndex] <- (true, List.replicate blockLength Free)
 
                         // Add another zero segment if we didn't use all available space
                         if openLength > blockLength then
-                            disk <- List.insertAt (openIndex + 1) (List.replicate (openLength - blockLength) Free) disk
-                            firstOpen <- openIndex + 1
-                        else
-                            firstOpen <- openIndex
-
-                        printfn "%A\n\n" disk
-
-                        found <- true
+                            disk.Insert(openIndex + 1, (false, List.replicate (openLength - blockLength) Free))
+                            blockIndex <- blockIndex + 1 // keep same block index as we increased size
 
                 openIndex <- openIndex + 1
 
-    disk
+        blockIndex <- blockIndex - 1
+
+    disk |> Seq.map snd |> Seq.concat
 
 let checksum (disk: Block seq) =
     disk
@@ -112,9 +115,8 @@ let checksum (disk: Block seq) =
         * (int64 i))
     |> Seq.sum
 
-// let part1 = frag puzzle |> checksum
-// printfn $"%A{part1}"
+let part1 = puzzle |> frag |> checksum
+printfn "Part 1: %d" part1
 
-printfn "TEST"
-let part2 = test |> defrag |> List.concat |> checksum
-printfn "%A" part2
+let part2 = puzzle |> defrag |> checksum
+printfn "Part 2: %d" part2
