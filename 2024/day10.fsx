@@ -12,23 +12,18 @@ let puzzle file =
 
 let trails, map = puzzle file
 
-let matrix = [| (1, 0); (-1, 0); (0, 1); (0, -1) |]
+let hike2 pos =
+    let matrix = [| (1, 0); (-1, 0); (0, 1); (0, -1) |]
 
-let validHeight curr next =
-    match Map.tryFind next map with
-    | Some nextHeight when nextHeight > curr && (abs (nextHeight - curr) = 1) -> true
-    | _ -> false
-
-let hike pos =
     let rec hike' pos visited summits =
         match Set.contains pos visited with
         | true -> summits
         | false ->
             match Map.tryFind pos map with
             | None -> summits // invalid position
-            | Some n ->
-                if n = 9 then
-                    Set.add pos summits
+            | Some height ->
+                if height = 9 then
+                    List.append [ pos ] summits
                 else
                     let visitedU = Set.add pos visited
                     let row, col = pos
@@ -36,13 +31,21 @@ let hike pos =
                     let next =
                         matrix
                         |> Seq.map (fun (dR, dC) -> (row + dR, col + dC))
-                        |> Seq.filter (fun next -> validHeight n next)
+                        |> Seq.choose (fun next ->
+                            Map.tryFind next map
+                            |> Option.filter (fun nextHeight -> nextHeight - height = 1)
+                            |> Option.map (fun _ -> next))
                         |> Seq.map (fun next -> hike' next visitedU summits)
 
-                    Set.unionMany next
+                    List.concat next
 
-    hike' pos Set.empty Set.empty
+    hike' pos Set.empty List.empty
 
-let part1 = trails |> Seq.map (fun c -> hike (c |> fst) |> Set.count) |> Seq.sum
+let part1 =
+    trails |> Seq.map fst |> Seq.map (hike2 >> Set.ofSeq >> Seq.length) |> Seq.sum
 
-printfn "Part 1: %A" part1
+printfn $"Part 1: %A{part1}"
+
+let part2 = trails |> Seq.map fst |> Seq.map (hike2 >> Seq.length) |> Seq.sum
+
+printfn $"Part 2: %A{part2}"
