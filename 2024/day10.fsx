@@ -8,44 +8,39 @@ let puzzle file =
         |> Seq.mapi (fun col cell -> ((row, col), System.Char.GetNumericValue cell |> int)))
     |> Seq.concat
     |> Seq.toArray
-    |> (fun tiles -> (tiles |> Seq.filter (fun (_, c) -> c = 0), tiles |> Map.ofSeq))
+    |> fun tiles ->
+        let heads = tiles |> Seq.filter (fun (_, c) -> c = 0) |> Seq.map fst
+        let map = tiles |> Map.ofSeq
+        (heads, map)
 
-let trails, map = puzzle file
+let getNeighbors (row, col) =
+    [| (row + 1, col); (row - 1, col); (row, col + 1); (row, col - 1) |]
 
-let hike2 pos =
-    let matrix = [| (1, 0); (-1, 0); (0, 1); (0, -1) |]
+let rec hike map pos visited =
+    match Set.contains pos visited with
+    | true -> []
+    | false ->
+        match Map.tryFind pos map with
+        | None -> []
+        | Some height ->
+            if height = 9 then
+                [ pos ]
+            else
+                getNeighbors pos
+                |> Array.choose (fun next ->
+                    Map.tryFind next map
+                    |> Option.filter (fun nextHeight -> nextHeight = height + 1)
+                    |> Option.map (fun _ -> hike map next (Set.add pos visited)))
+                |> List.concat
 
-    let rec hike' pos visited summits =
-        match Set.contains pos visited with
-        | true -> summits
-        | false ->
-            match Map.tryFind pos map with
-            | None -> summits // invalid position
-            | Some height ->
-                if height = 9 then
-                    List.append [ pos ] summits
-                else
-                    let visitedU = Set.add pos visited
-                    let row, col = pos
-
-                    let next =
-                        matrix
-                        |> Seq.map (fun (dR, dC) -> (row + dR, col + dC))
-                        |> Seq.choose (fun next ->
-                            Map.tryFind next map
-                            |> Option.filter (fun nextHeight -> nextHeight - height = 1)
-                            |> Option.map (fun _ -> next))
-                        |> Seq.map (fun next -> hike' next visitedU summits)
-
-                    List.concat next
-
-    hike' pos Set.empty List.empty
+let heads, map = puzzle file
 
 let part1 =
-    trails |> Seq.map fst |> Seq.map (hike2 >> Set.ofSeq >> Seq.length) |> Seq.sum
+    heads
+    |> Seq.sumBy (fun pos -> hike map pos Set.empty |> Set.ofList |> Set.count)
 
 printfn $"Part 1: %A{part1}"
 
-let part2 = trails |> Seq.map fst |> Seq.map (hike2 >> Seq.length) |> Seq.sum
+let part2 = heads |> Seq.sumBy (fun pos -> hike map pos Set.empty |> List.length)
 
 printfn $"Part 2: %A{part2}"
