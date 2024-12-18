@@ -18,35 +18,30 @@ let groups =
 let getNeighbors (row, col) =
     [ (row + 1, col); (row - 1, col); (row, col + 1); (row, col - 1) ]
 
-[<TailCall>]
-let fill pos items visited =
+let fill items =
+    let rec fill' todo acc visited =
+        match todo with
+        | [] -> acc
+        | pos :: rest ->
+            if Set.contains pos visited then
+                fill' rest acc visited
+            else if not (Set.contains pos items) then
+                fill' rest acc visited
+            else
+                fill' (rest @ getNeighbors pos) (pos :: acc) (Set.add pos visited)
 
-    let rec fill' pos items visited =
+    fill' [ Set.minElement items ] [] Set.empty
 
-        if Set.contains pos visited then
-            []
-        else if not (Set.contains pos items) then
-            []
-        else
-            pos
-            :: (getNeighbors pos
-                |> List.filter (fun next -> Set.contains next items)
-                |> List.collect (fun next -> fill' next items (Set.add pos visited))
-                |> List.distinct) // Not sure why this is needed, but the "B" crop has repeated items
+let partition work =
+    let rec partition' acc work =
+        match Set.count work with
+        | 0 -> acc
+        | _ ->
+            let next = fill work
+            let remaining = Set.difference work (Set.ofList next)
+            partition' (next :: acc) remaining
 
-    fill' pos items visited
-
-let rec partition work =
-    match Set.count work with
-    | 0 -> [] // no more items
-    | _ ->
-        // printfn "work %A" work
-        let next = fill (Set.minElement work) work Set.empty
-        // printfn "next %A" next
-        let remaining = Set.difference work (next |> Set.ofList)
-        // printfn "remaining %A" remaining
-        next :: partition remaining
-
+    partition' [] work
 
 let area region = Seq.length region
 
@@ -57,23 +52,13 @@ let perimeter region =
         |> Seq.filter (fun next -> not <| Set.contains next region)
         |> Seq.length)
 
-printfn "%A" groups
-
 let part1 =
     groups
-    |> Seq.map (snd >> Array.ofSeq)
-    |> Array.ofSeq
-    |> Array.Parallel.map (fun crop ->
-        crop
+    |> Seq.map (fun (_, positions) ->
+        positions
         |> Set.ofSeq
         |> partition
-        |> Seq.map (fun part ->
-            printfn "%A" part
-            part)
-        |> Seq.map (fun region -> area region * perimeter (Set.ofList region))
-        |> Seq.map (fun a ->
-            // printfn "%A" a
-            a))
+        |> Seq.map (fun region -> area region * perimeter (Set.ofList region)))
     |> Seq.concat
     |> Seq.sum
 
