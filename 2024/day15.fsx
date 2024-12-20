@@ -107,6 +107,17 @@ let rec push board pos direction =
     | Some(Wall) -> None
     | _ -> push board next direction
 
+let rec pushWide board pos direction =
+    let next = Direction.move pos direction
+
+    match Map.tryFind next board with
+    | Some(Empty) -> Some(next)
+    | Some(Wall) -> None
+    | _ -> push board next direction
+
+let rec moveBox (WideBox(l, r)) board pos direction = 
+
+
 let moveRobot board pos direction =
     let next = Direction.move pos direction
 
@@ -116,6 +127,10 @@ let moveRobot board pos direction =
     | Some(Box) ->
         match push board next direction with
         | Some(behind) -> (board |> Map.add behind Box |> Map.add pos Empty |> Map.add next Robot, next)
+        | None -> (board, pos)
+    | Some(WideBox(l, r)) ->
+        match pushWide board pos direction with
+        | Some(behind) -> (board, pos)
         | None -> (board, pos)
     | v -> failwithf "invalid state %A" v
 
@@ -129,10 +144,9 @@ let part1 =
     |> Seq.scan (fun (board, pos) instruction -> moveRobot board pos instruction) (board, robot)
     |> Seq.last
     |> fst
-    |> boxPositions
-    |> Seq.sumBy gps
 
-printfn "Part 1: %i" part1
+print part1
+printfn "Part 1: %i" (part1 |> boxPositions |> Seq.sumBy gps)
 
 // |> Seq.iteri (fun i b ->k
 //     printfn "Iteration %i -> %A\n" i instructions[i]
@@ -147,3 +161,4 @@ let part2 =
     |> Seq.sumBy gps
 
 printfn "Part 2: %i" part2
+print wideBoard
