@@ -1,15 +1,17 @@
 let file =
     fsi.CommandLineArgs |> Array.tryItem 1 |> Option.defaultValue "sample.txt"
 
+type Pos = int * int
 
 type Piece =
     | Wall
     | Robot
     | Box
+    | WideBox of Pos * Pos
     | Empty
 
 module Piece =
-    let parse =
+    let parse: char -> Piece =
         function
         | '#' -> Wall
         | '@' -> Robot
@@ -49,30 +51,53 @@ let board =
     |> Seq.concat
     |> Map.ofSeq
 
+let wideBoard =
+    boardLines
+    |> Array.mapi (fun row line ->
+        line.Replace("#", "##").Replace(".", "..").Replace("O", "[]").Replace("@", "@.")
+        |> Seq.chunkBySize 2
+        |> Seq.mapi (fun col pair ->
+            let left = row, col * 2
+            let right = row, (col * 2) + 1
+
+            match pair with
+            | [| '['; ']' |] -> [| left, WideBox(left, right); right, WideBox(left, right) |]
+            | [| l; r |] -> [| left, Piece.parse l; right, Piece.parse r |]
+            | _ -> failwith "invalid input")
+
+        |> Seq.concat)
+    |> Seq.concat
+    |> Map.ofSeq
+
 let instructions =
     directionLines
     |> Array.skip (1)
     |> Array.map (fun line -> line |> Seq.map Direction.parse |> Seq.toArray)
     |> Array.concat
 
-let dimensions = board.Keys |> Seq.max
 let robot = (board |> Seq.find (fun kvp -> kvp.Value = Robot)).Key
 
-let print (height, width) board =
+let print board =
+    let (height, width) = Map.keys board |> Seq.max
 
     for row = 0 to height do
         for col = 0 to width do
-            match Map.tryFind (row, col) board with
-            | Some(Wall) -> '#'
-            | Some(Box) -> '0'
-            | Some(Robot) -> '@'
-            | _ -> ' '
-            |> printf "%c"
+            let pos = (row, col)
+
+            match Map.tryFind pos board with
+            | Some(Wall) -> "#"
+            | Some(Box) -> "0"
+            | Some(WideBox(l, r)) ->
+                if pos = l then "["
+                else if pos = r then "]"
+                else ""
+            | Some(Robot) -> "@"
+            | _ -> " "
+            |> printf "%s"
 
         printf "\n"
 
     printf "\n"
-
 
 let rec push board pos direction =
     let next = Direction.move pos direction
@@ -99,17 +124,26 @@ let boxPositions board =
 
 let gps (row, col) = (row * 100) + col
 
-
-let boards =
+let part1 =
     instructions
     |> Seq.scan (fun (board, pos) instruction -> moveRobot board pos instruction) (board, robot)
-    |> Seq.map fst
-// |> Seq.iteri (fun i b ->
+    |> Seq.last
+    |> fst
+    |> boxPositions
+    |> Seq.sumBy gps
+
+printfn "Part 1: %i" part1
+
+// |> Seq.iteri (fun i b ->k
 //     printfn "Iteration %i -> %A\n" i instructions[i]
 //     print dimensions b)
 
-let result = boards |> Seq.last
+let part2 =
+    instructions
+    |> Seq.scan (fun (board, pos) instruction -> moveRobot board pos instruction) (wideBoard, robot)
+    |> Seq.last
+    |> fst
+    |> boxPositions
+    |> Seq.sumBy gps
 
-print dimensions result
-
-printfn "Part 1: %i" (result |> boxPositions |> Seq.sumBy gps)
+printfn "Part 2: %i" part2
