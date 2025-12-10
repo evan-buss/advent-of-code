@@ -3,7 +3,7 @@ using System.ComponentModel;
 var file = args switch
 {
     [var path] => path,
-    _ => Console.ReadLine() ?? throw new ArgumentException("No file path provided")
+    _ => Console.ReadLine() ?? throw new ArgumentException("No file path provided"),
 };
 
 var lines = File.ReadAllLines(file).ToList();
@@ -14,9 +14,8 @@ Console.WriteLine($"Part 2: {Part2(lines)}");
 static long Part1(List<string> lines)
 {
     var rows = lines
-        .Select(
-            x =>
-                x.Split(" ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(x =>
+            x.Split(" ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         )
         .ToArray();
 
@@ -68,7 +67,7 @@ static long Part2(List<string> lines)
 enum Symbol
 {
     Add,
-    Multiply
+    Multiply,
 }
 
 readonly record struct Equation(long[] Numbers, Symbol Symbol)
@@ -84,7 +83,7 @@ readonly record struct Equation(long[] Numbers, Symbol Symbol)
         {
             '+' => Symbol.Add,
             '*' => Symbol.Multiply,
-            _ => throw new InvalidEnumArgumentException()
+            _ => throw new InvalidEnumArgumentException(),
         };
     }
 
@@ -94,7 +93,7 @@ readonly record struct Equation(long[] Numbers, Symbol Symbol)
         {
             Symbol.Add => Numbers.Aggregate(0L, (curr, acc) => curr + acc),
             Symbol.Multiply => Numbers.Aggregate(1L, (curr, acc) => curr * acc),
-            _ => throw new InvalidEnumArgumentException()
+            _ => throw new InvalidEnumArgumentException(),
         };
     }
 }
